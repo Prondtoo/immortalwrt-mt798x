@@ -1,0 +1,98 @@
+# 
+# <https://github.com/KFERMercer/OpenWrt-CI>
+#
+# Copyright (C) 2019 P3TERX
+#
+# Copyright (C) 2020 KFERMercer
+#
+name: x86-64
+
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+
+jobs:
+
+  build_openwrt:
+
+    name: Build OpenWrt firmware
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Space cleanup and Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+          sudo -E apt-mark hold grub-efi-amd64-signed
+          sudo -E apt update
+          sudo -E apt -y full-upgrade
+          sudo -E apt -y install python3 python3-pip ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+          sudo -E systemctl daemon-reload
+          sudo -E apt -y autoremove --purge
+          sudo -E apt clean
+          sudo -E pip3 install b2
+          sudo -E timedatectl set-timezone "Asia/Shanghai"
+          
+      - name: Checkout OpenWrt
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Cache
+        uses: klever1988/cachewrtbuild@main
+        with:
+          ccache: 'true'
+          prefix: '.'
+
+      - name: Update feeds
+        run: |
+          echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> ./feeds.conf.default
+          echo "src-git small https://github.com/kenzok8/small" >> ./feeds.conf.default
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          
+      - name: Download config file
+        run: |
+          wget -O .config https://cdn.juua.net/configrax3000m
+      
+      - name: Generate configuration file
+        run: make defconfig
+
+      - name: Make download
+        run: |
+          make download -j16
+          
+      - name: Compile firmware
+        run: |
+          make V=s -j$(nproc)
+          echo "======================="
+          echo "Space usage:"
+          echo "======================="
+          df -h
+          echo "======================="
+          du -h --max-depth=1 ./ --exclude=build_dir --exclude=bin
+          du -h --max-depth=1 ./build_dir
+          du -h --max-depth=1 ./bin   
+      - name: Sync artifacts to b2
+        run: |
+          b2 authorize-account $B2_APPKEY_ID $B2_APPKEY
+          b2 upload_file $B2_BUCKET ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz 
+          #b2 sync --delete --replaceNewer ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz $B2_BUCKET/x86-64
+          b2 clear-account
+        env:
+          B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
+          B2_APPKEY: ${{ secrets.B2_APPKEY }}
+          B2_BUCKET: ${{ secrets.B2_BUCKET }}
+
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v3
+        with:
+          name: OpenWrt_firmware
+          path: ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz
+          
+
