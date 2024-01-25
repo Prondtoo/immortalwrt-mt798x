@@ -8,8 +8,9 @@
 name: rax3000m
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - '*'
 permissions:
   contents: read
 
