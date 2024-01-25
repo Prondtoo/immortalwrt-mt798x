@@ -50,8 +50,6 @@ jobs:
 
       - name: Update feeds
         run: |
-          echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> ./feeds.conf.default
-          echo "src-git small https://github.com/kenzok8/small" >> ./feeds.conf.default
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           
@@ -80,7 +78,8 @@ jobs:
       - name: Sync artifacts to b2
         run: |
           b2 authorize-account $B2_APPKEY_ID $B2_APPKEY
-          b2 upload_file $B2_BUCKET ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz 
+          b2 upload_file $B2_BUCKET .//bin/targets/mediatek/mt7981/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-factory.bin mt7981/rax3000m/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-factory.bin
+          b2 upload_file $B2_BUCKET .//bin/targets/mediatek/mt7981/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-sysupgrade.bin mt7981/rax3000m/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-sysupgrade.bin
           #b2 sync --delete --replaceNewer ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz $B2_BUCKET/x86-64
           b2 clear-account
         env:
@@ -93,6 +92,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: OpenWrt_firmware
-          path: ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz
+          path: ./bin/targets/mediatek/mt7981
           
 
