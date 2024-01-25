@@ -78,8 +78,8 @@ jobs:
       - name: Sync artifacts to b2
         run: |
           b2 authorize-account $B2_APPKEY_ID $B2_APPKEY
-          b2 upload_file $B2_BUCKET .//bin/targets/mediatek/mt7981/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-factory.bin mt7981/rax3000m/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-factory.bin
-          b2 upload_file $B2_BUCKET .//bin/targets/mediatek/mt7981/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-sysupgrade.bin mt7981/rax3000m/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-sysupgrade.bin
+          b2 upload_file $B2_BUCKET .//bin/targets/mediatek/mt7981/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-factory.bin openwrt/rax3000m/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-factory.bin
+          b2 upload_file $B2_BUCKET .//bin/targets/mediatek/mt7981/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-sysupgrade.bin openwrt/rax3000m/immortalwrt-mediatek-mt7981-cmcc_rax3000m-squashfs-sysupgrade.bin
           #b2 sync --delete --replaceNewer ./bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img.gz $B2_BUCKET/x86-64
           b2 clear-account
         env:
