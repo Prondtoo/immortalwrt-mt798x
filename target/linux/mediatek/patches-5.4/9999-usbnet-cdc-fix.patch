@@ -1,0 +1,15 @@
+Index: linux-5.4.284/drivers/net/usb/cdc_ether.c
+===================================================================
+--- linux-5.4.284.orig/drivers/net/usb/cdc_ether.c
++++ linux-5.4.284/drivers/net/cdc_ether.c
+@@ -445,6 +445,10 @@
+ 		usb_driver_release_interface(driver_of(intf), info->data);
+ 		return status;
+ 	}
++	if (strncmp(dev->net->name, "eth%d", IFNAMSIZ) == 0) {
++		pr_warn("Device name eth%d is not allowed. Renaming to usb%d.\n");
++		strscpy(dev->net->name, "usb%d", IFNAMSIZ);
++	}
+ 
+ 	return 0;
+ }
