@@ -282,7 +282,7 @@ int nf_hnat_netdevice_event(struct notifier_block *unused, unsigned long event,
 
 	switch (event) {
 	case NETDEV_UP:
-		if (!hnat_priv->guest_en && dev->name) {
+		if (!hnat_priv->guest_en) {
 			if (!strcmp(dev->name, "ra1") || !strcmp(dev->name, "rax1"))
 				break;
 		}
@@ -451,7 +451,7 @@ unsigned int do_hnat_ext_to_ge(struct sk_buff *skb, const struct net_device *in,
 		}
 
 		/*set where we come from*/
-		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), in->ifindex & VLAN_VID_MASK);
+		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), VLAN_CFI_MASK | (in->ifindex & VLAN_VID_MASK));
 		trace_printk(
 			"%s: vlan_prot=0x%x, vlan_tci=%x, in->name=%s, skb->dev->name=%s\n",
 			__func__, ntohs(skb->vlan_proto), skb->vlan_tci,
@@ -657,6 +657,12 @@ static inline void hnat_set_alg(const struct nf_hook_state *state,
 	skb_hnat_alg(skb) = val;
 }
 
+static inline void hnat_set_tag(const struct nf_hook_state *state,
+				struct sk_buff *skb, int val)
+{
+	skb_hnat_magic_tag(skb) = val;
+}
+
 static inline void hnat_set_head_frags(const struct nf_hook_state *state,
 				       struct sk_buff *head_skb, int val,
 				       void (*fn)(const struct nf_hook_state *state,
@@ -858,8 +864,8 @@ mtk_hnat_ipv6_nf_pre_routing(void *priv, struct sk_buff *skb,
 		goto drop;
 
 	if (!IS_WHNAT(state->in) && IS_EXT(state->in) && IS_SPACE_AVAILABLE_HEAD(skb)) {
-		skb_hnat_alg(skb) = 0;
-		skb_hnat_magic_tag(skb) = HNAT_MAGIC_TAG;
+		hnat_set_head_frags(state, skb, 0, hnat_set_alg);
+		hnat_set_head_frags(state, skb, HNAT_MAGIC_TAG, hnat_set_tag);
 	}
 
 	if (!is_magic_tag_valid(skb))
@@ -931,8 +937,8 @@ mtk_hnat_ipv4_nf_pre_routing(void *priv, struct sk_buff *skb,
 		goto drop;
 
 	if (!IS_WHNAT(state->in) && IS_EXT(state->in) && IS_SPACE_AVAILABLE_HEAD(skb)) {
-		skb_hnat_alg(skb) = 0;
-		skb_hnat_magic_tag(skb) = HNAT_MAGIC_TAG;
+		hnat_set_head_frags(state, skb, 0, hnat_set_alg);
+		hnat_set_head_frags(state, skb, HNAT_MAGIC_TAG, hnat_set_tag);
 	}
 
 	if (!is_magic_tag_valid(skb))
@@ -994,8 +1000,8 @@ mtk_hnat_br_nf_local_in(void *priv, struct sk_buff *skb,
 		goto drop;
 
 	if (!IS_WHNAT(state->in) && IS_EXT(state->in) && IS_SPACE_AVAILABLE_HEAD(skb)) {
-		skb_hnat_alg(skb) = 0;
-		skb_hnat_magic_tag(skb) = HNAT_MAGIC_TAG;
+		hnat_set_head_frags(state, skb, 0, hnat_set_alg);
+		hnat_set_head_frags(state, skb, HNAT_MAGIC_TAG, hnat_set_tag);
 	}
 
 	if (!is_magic_tag_valid(skb))
@@ -1992,7 +1998,7 @@ void mtk_ppe_dev_register_hook(struct net_device *dev)
 	int i, number = 0;
 	struct extdev_entry *ext_entry;
 
-	if (!hnat_priv->guest_en && dev->name) {
+	if (!hnat_priv->guest_en) {
 		if (!strcmp(dev->name, "ra1") || !strcmp(dev->name, "rax1"))
 			return;
 	}
