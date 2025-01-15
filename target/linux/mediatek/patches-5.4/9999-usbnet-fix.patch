@@ -1,0 +1,18 @@
+Index: linux-5.4.284/drivers/net/usb/usbnet.c
+===================================================================
+--- linux-5.4.284.orig/drivers/net/usb/usbnet.c
++++ linux-5.4.284/drivers/net/usb/usbnet.c
+@@ -1733,10 +1733,11 @@
+ 		// heuristic:  "usb%d" for links we know are two-host,
+ 		// else "eth%d" when there's reasonable doubt.  userspace
+ 		// can rename the link if it knows better.
+-		if ((dev->driver_info->flags & FLAG_ETHER) != 0 &&
++/*		if ((dev->driver_info->flags & FLAG_ETHER) != 0 &&
+ 		    ((dev->driver_info->flags & FLAG_POINTTOPOINT) == 0 ||
+ 		     (net->dev_addr [0] & 0x02) == 0))
+ 			strscpy(net->name, "eth%d", sizeof(net->name));
++*/
+ 		/* WLAN devices should always be named "wlan%d" */
+ 		if ((dev->driver_info->flags & FLAG_WLAN) != 0)
+ 			strscpy(net->name, "wlan%d", sizeof(net->name));
+
