@@ -1,0 +1,17 @@
+Index: linux-5.4.284/drivers/net/usb/rndis_host.c
+===================================================================
+--- linux-5.4.284.orig/drivers/net/usb/rndis_host.c
++++ linux-5.4.284/drivers/net/usb/rndis_host.c
+@@ -424,6 +424,11 @@
+ 	else
+ 		ether_addr_copy(net->dev_addr, bp);
+ 
++if (strcmp(net->name, "eth%d") == 0) {
++    dev_warn(&intf->dev, "Renaming to eth%d is not allowed, fallback to usb%d\n");
++    strscpy(net->name, "usb%d", sizeof(net->name));
++}
++
+ 	/* set a nonzero filter to enable data transfers */
+ 	memset(u.set, 0, sizeof *u.set);
+ 	u.set->msg_type = cpu_to_le32(RNDIS_MSG_SET);
+
